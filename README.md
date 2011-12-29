@@ -16,3 +16,7 @@ VMDevStack child hierarchy:
 VMDevStack is included in the following roles:
    * VMBase
 ```
+
+## Installation
+
+Drop into your ~/.chef/plugins/knife/ dir
