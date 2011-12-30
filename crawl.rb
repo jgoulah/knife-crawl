@@ -26,7 +26,6 @@ module GoulahKnifePlugins
       super
     end
 
-
     deps do
       require 'chef/role'
       require 'chef/search/query'
@@ -63,19 +62,18 @@ module GoulahKnifePlugins
     end
 
     def included_from(role_name)
-        @level = @level + 1
+        @level += 1
         q_roles = Chef::Search::Query.new
         query = "run_list:role\\[#{role_name}\\]"
 
-        result_items_nodes = []
-        result_count_nodes = 0
-
         begin
-          result = q_roles.search('role', query, nil, 0, 1000)
-          if result[2] == 0
+          rows, start, total = q_roles.search('role', query, nil, 0, 1000)
+
+          if total == 0
             output "none"
           end
-          result[0].each do |role|
+
+          rows.each do |role|
             output " * " + role.name
           end
         rescue Net::HTTPServerException => e
@@ -83,25 +81,30 @@ module GoulahKnifePlugins
           ui.error("knife crawl failed: #{msg}")
           exit 1
         end
-
     end
 
     def crawl_role(role_name)
-      @level = @level + 1
+      @level += 1
       role = Chef::Role.load(role_name)
 
       if !has_roles? role and @verbose
         output " - no further roles found under " + role_name
       end
 
-      role.run_list.each do |item|
-        if item.role?
-          output " * " + item.name
-          crawl_role(item.name)
-        end
+      loop_run_list role do |item|
+        output " * " + item.name
+        crawl_role(item.name)
       end
 
-      @level = @level - 1
+      @level -= 1
+    end
+
+    def loop_run_list(role, &blk)
+      role.run_list.each do |item|
+        if item.role?
+          yield item
+        end
+      end
     end
 
     def output(msg)
@@ -110,21 +113,13 @@ module GoulahKnifePlugins
 
     def indent_str
         str = ""
-        level = @level
-        while level > 0
-          str << "  "
-          level -= 1
-        end
+        @level.times { str << "  " }
         return str
     end
 
     # search the run_list for roles (since it has roles and recipes)
     def has_roles?(role)
-      role.run_list.each do |item|
-        if item.role?
-            return true
-        end
-      end
+      loop_run_list(role) { return true }
       return false
     end
 
