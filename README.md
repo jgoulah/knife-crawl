@@ -19,4 +19,12 @@ VMDevStack is included in the following roles:
 
 ## Installation
 
-Drop into your ~/.chef/plugins/knife/ dir
+#### Script install
+
+Copy the knife-crawl script from lib/chef/knife/crawl.rb to your ~/.chef/plugins/knife directory.
+
+#### Gem install
+
+knife-crawl is available on rubygems.org - if you have that source in your gemrc, you can simply use:
+
+    gem install knife-crawl
