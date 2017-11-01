@@ -38,6 +38,25 @@ module GoulahKnifePlugins
       :default => false,
       :description => "Find the roles this role is included in"
 
+    option :expand,
+      :short => '-x',
+      :long => '--expand',
+      :boolean => true,
+      :default => false,
+      :description => "Expand the recipe list for each role"
+
+    option :environment,
+      :short => "-e ENVIRONMENT",
+      :long => "--environment ENVIRONMENT",
+      :description => "The environemnt to use for run_list expansion",
+      :default => "production"
+
+    option :data_source,
+      :short => "-d DATA_SOURCE",
+      :long => "--data-source DATA_SOURCE",
+      :description => "The data source to use (server/disk)",
+      :default => "server"
+
     def run
       unless name_args.size == 1
         puts "You need to supply a role"
@@ -93,6 +112,13 @@ module GoulahKnifePlugins
 
       loop_run_list role do |item|
         output " * " + item.name
+
+        if config[:expand]
+            runlist = Chef::RunList.new
+            runlist.add("role[#{item.name}]")
+            expanded = runlist.expand(config[:environment],config[:data_source]).recipes
+            output "   - " + expanded.inspect
+        end
         crawl_role(item.name)
       end
 
